@@ -8,6 +8,7 @@ import (
 
 type UserQuery interface {
 	GetUsers() ([]response.UserResponse, error)
+	GetUserById(userId int) response.UserResponse
 }
 
 type UserQueryImpl struct {
@@ -48,4 +49,25 @@ func (q *UserQueryImpl) GetUsers() ([]response.UserResponse, error) {
 	}
 
 	return usersResponse, nil
+}
+
+func (q *UserQueryImpl) GetUserById(userId int) response.UserResponse {
+	var userReponse response.UserResponse
+
+	service := services.UserService{
+		Db: q.Db,
+	}
+
+	row := service.GetUserById(userId)
+
+	if err := row.Scan(
+		&userReponse.Id,
+		&userReponse.Name,
+		&userReponse.Age,
+		&userReponse.Gender,
+	); err != nil {
+		return userReponse
+	}
+
+	return userReponse
 }

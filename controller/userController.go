@@ -5,6 +5,7 @@ import (
 	"go-clean-code/contracts/response"
 	"go-clean-code/handlers/command"
 	"go-clean-code/handlers/query"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,6 +25,7 @@ func NewUserController(command command.UserCommand, query query.UserQuery) *User
 func (con *UserController) MapUserEndpoint(router *gin.RouterGroup) {
 	router.GET("/users", con.getUsers)
 	router.POST("/user", con.createUser)
+	router.PATCH("/user/:id", con.updateUser)
 }
 
 func (con *UserController) getUsers(c *gin.Context) {
@@ -50,7 +52,7 @@ func (con *UserController) getUsers(c *gin.Context) {
 }
 
 func (con *UserController) createUser(c *gin.Context) {
-	var request request.UserCreateRequest
+	var request request.UserRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		res := response.ErrorResponse{
@@ -77,6 +79,55 @@ func (con *UserController) createUser(c *gin.Context) {
 		Status:  true,
 		Code:    200,
 		Message: "Successfully insert data",
+		Data:    nil,
+	}
+
+	c.JSON(200, res)
+}
+
+func (con *UserController) updateUser(c *gin.Context) {
+	var request request.UserRequest
+
+	userId, _ := strconv.Atoi(c.Param("id"))
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		res := response.ErrorResponse{
+			Status:    false,
+			ErrorCode: 500,
+			Message:   "Failed to bind json",
+		}
+		c.JSON(500, res)
+		return
+	}
+
+	// Check Existing Data
+	existing := con.Query.GetUserById(userId)
+	if existing.Id == 0 {
+		res := response.ErrorResponse{
+			Status:    false,
+			ErrorCode: 404,
+			Message:   "User not found",
+		}
+		c.JSON(404, res)
+		return
+	}
+
+	err := con.Command.UpdateUser(userId, request)
+
+	if err != nil {
+		res := response.ErrorResponse{
+			Status:    false,
+			ErrorCode: 500,
+			Message:   "Failed to update data",
+		}
+		c.JSON(500, res)
+		return
+	}
+
+	res := response.Response{
+		Status:  true,
+		Code:    200,
+		Message: "Successfully update data",
 		Data:    nil,
 	}
 

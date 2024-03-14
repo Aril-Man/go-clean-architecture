@@ -23,7 +23,7 @@ func (s *UserService) GetUsers() (*sql.Rows, error) {
 	return rows, nil
 }
 
-func (s *UserService) CreateUser(request request.UserCreateRequest) error {
+func (s *UserService) CreateUser(request request.UserRequest) error {
 	repo := repository.UserRepository{
 		Db: s.Db,
 	}
@@ -34,4 +34,25 @@ func (s *UserService) CreateUser(request request.UserCreateRequest) error {
 	}
 
 	return nil
+}
+
+func (s *UserService) UpdateUser(userId int, request request.UserRequest) error {
+	repo := repository.UserRepository{
+		Db: s.Db,
+	}
+
+	err := repo.UpdateUser(userId, request)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *UserService) GetUserById(userId int) *sql.Row {
+	repo := repository.UserRepository{
+		Db: s.Db,
+	}
+	row := repo.GetUserById(userId)
+	return row
 }
